@@ -1,0 +1,35 @@
+#!/bin/sh
+# --- Enable error detection. ---
+set -e
+
+# --- Set version of this package ---
+THISVERSION="${nexus-version}"
+
+echo Pre-installation script version $THISVERSION
+echo "   Parameters    : $@"
+echo "   Option        : $1"
+echo "   Other version : $2"
+echo "   This version  : $THISVERSION"
+
+case "$1" in
+    install)
+        echo "   Installing Nexus..."
+        ;;
+    upgrade)
+        echo "   Upgrading Nexus..."
+        
+        # Is the service running?
+        set +e
+        systemctl status nexus.service > /dev/null 2>&1
+        RUNNING=$?
+        set -e
+        if [ "0" = "$RUNNING" ]; then
+            echo "      Stopping Nexus service..."
+            systemctl stop nexus.service
+            echo "      Nexus service stopped."
+        fi
+        ;;
+    *) 
+        echo "   Option $1 not supported by this script."
+        ;;
+esac

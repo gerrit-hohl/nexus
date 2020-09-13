@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/DECORATION/1.8.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/DECORATION/1.8.0 http://maven.apache.org/xsd/decoration-1.8.0.xsd"
+	name="${project.name}">
+	
+	<skin>
+		<groupId>org.apache.maven.skins</groupId>
+		<artifactId>maven-fluido-skin</artifactId>
+		<version>1.9</version>
+	</skin>
+	<custom>
+		<fluidoSkin>
+			<sourceLineNumbersEnabled>true</sourceLineNumbersEnabled>
+			<topBarEnabled>true</topBarEnabled>
+			<sideBarEnabled>true</sideBarEnabled>
+			<gitHub>
+				<projectId>gerrit-hohl/nexus</projectId>
+				<ribbonOrientation>right</ribbonOrientation>
+				<ribbonColor>red</ribbonColor>
+			</gitHub>
+		</fluidoSkin>
+	</custom>
+	<body>
+		<menu name="${project.name}">
+			<item name="About" href="index.html" />
+		</menu>
+		<menu name="Project files">
+			<item name="pom.xml" href="pom.xml" />
+		</menu>
+		<menu ref="reports" inherit="bottom" />
+	</body>
+</project>

@@ -1,0 +1,632 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	
+	<groupId>com.github.gerrit-hohl</groupId>
+	<artifactId>nexus</artifactId>
+	<version>3.27.0</version>
+	<packaging>pom</packaging>
+	
+	<name>Nexus</name>
+	<description>Project for creating a Nexus Debian package.</description>
+	<url>https://github.com/gerrit-hohl/nexus</url>
+	
+	<properties>
+		<!-- Must be the same version like the version of the tar.gz archive in the srv/main/config folder -->
+		<nexus-version>3.27.0-03</nexus-version>
+		
+		<!-- The owner of the files (The scripts will use "chown" anyway, so not that important) -->
+		<nexus-group-id>0</nexus-group-id>
+		<nexus-group-name>nexus</nexus-group-name>
+		<nexus-user-id>0</nexus-user-id>
+		<nexus-user-name>nexus</nexus-user-name>
+		
+		<!-- The folder containing the files -->
+		<config-folder>${project.basedir}/src/main/config</config-folder>
+		
+		<!-- Encoding -->
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		
+		<!-- Java version (Just for the sake of completeness) -->
+		<java-version>1.8</java-version>
+		
+		<!-- Maven plug-in versions -->
+		<maven-clean-plugin-version>3.1.0</maven-clean-plugin-version>
+		<maven-dependency-plugin-version>3.1.2</maven-dependency-plugin-version>
+		<maven-resources-plugin-version>3.2.0</maven-resources-plugin-version>
+		<maven-compiler-plugin-version>3.8.1</maven-compiler-plugin-version>
+		<maven-assembly-plugin-version>3.3.0</maven-assembly-plugin-version>
+		<maven-antrun-plugin-version>3.0.0</maven-antrun-plugin-version>
+		<ant-contrib-version>1.0b3</ant-contrib-version>
+		<dpkg-maven-plugin-version>1.0.5</dpkg-maven-plugin-version>
+		<maven-install-plugin-version>2.5.2</maven-install-plugin-version>
+		<maven-deploy-plugin-version>2.8.2</maven-deploy-plugin-version>
+		<maven-release-plugin-version>2.5.3</maven-release-plugin-version>
+		<maven-site-plugin-version>3.9.1</maven-site-plugin-version>
+		<maven-project-info-reports-plugin-version>3.1.0</maven-project-info-reports-plugin-version>
+		<versions-maven-plugin-version>2.8.1</versions-maven-plugin-version>
+	</properties>
+	<dependencies>
+		<!-- No dependencies -->
+	</dependencies>
+	
+	<!-- Build settings -->
+	<build>
+		<!-- Many of the plug-ins are already defined by Maven by default.
+		     So they are listed only for the sake of completeness. -->
+		<pluginManagement>
+			<plugins>
+				<!-- Defined by Maven (default plug-in) -->
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-clean-plugin</artifactId>
+					<version>${maven-clean-plugin-version}</version>
+				</plugin>
+				<!-- Defined by Maven (default plug-in) -->
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-dependency-plugin</artifactId>
+					<version>${maven-dependency-plugin-version}</version>
+				</plugin>
+				<!-- Defined by Maven (default plug-in) -->
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-resources-plugin</artifactId>
+					<version>${maven-resources-plugin-version}</version>
+				</plugin>
+				<!-- Defined by Maven (default plug-in) -->
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>${maven-compiler-plugin-version}</version>
+					<configuration>
+						<!-- Don't compile main classes -->
+						<skipMain>true</skipMain>
+						<!-- Don't compile test classes -->
+						<skip>true</skip>
+						<!-- Java version -->
+						<source>${java-version}</source>
+						<target>${java-version}</target>
+					</configuration>
+				</plugin>
+				<!-- Defined by Maven (default plug-in) -->
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-assembly-plugin</artifactId>
+					<version>${maven-assembly-plugin-version}</version>
+				</plugin>
+				<!-- Defined by Maven (default plug-in) -->
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-antrun-plugin</artifactId>
+					<version>${maven-antrun-plugin-version}</version>
+					<dependencies>
+						<!-- Needed for if-then-else
+						     as different targets will make the scripts even more complicated -->
+						<dependency>
+							<groupId>ant-contrib</groupId>
+							<artifactId>ant-contrib</artifactId>
+							<version>${ant-contrib-version}</version>
+							<exclusions>
+								<!-- Otherwise it will load ant 1.5
+								     which will collide with the ant version of the maven-antrun-plugin -->
+								<exclusion>
+									<groupId>ant</groupId>
+									<artifactId>ant</artifactId>
+								</exclusion>
+							</exclusions>
+						</dependency>
+					</dependencies>
+				</plugin>
+				<!-- Needed for the Debian package creation -->
+				<plugin>
+					<groupId>net.sourceforge.javadpkg</groupId>
+					<artifactId>dpkg-maven-plugin</artifactId>
+					<version>${dpkg-maven-plugin-version}</version>
+				</plugin>
+				<!-- Defined by Maven (default plug-in) -->
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-install-plugin</artifactId>
+					<version>${maven-install-plugin-version}</version>
+					<configuration>
+						<!-- Don't install any of the default JAR files -->
+						<skip>true</skip>
+					</configuration>
+				</plugin>
+				<!-- Defined by Maven (default plug-in) -->
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-deploy-plugin</artifactId>
+					<version>${maven-deploy-plugin-version}</version>
+					<configuration>
+						<!-- Don't deploy any of the default JAR files -->
+						<skip>true</skip>
+					</configuration>
+				</plugin>
+				<!-- Defined by Maven (default plug-in) -->
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-release-plugin</artifactId>
+					<version>${maven-release-plugin-version}</version>
+				</plugin>
+				<!-- Defined by Maven (default plug-in) -->
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-site-plugin</artifactId>
+					<version>${maven-site-plugin-version}</version>
+					<configuration>
+						<locales>en</locales>
+					</configuration>
+				</plugin>
+				<!-- Used by the maven-site-plugin -->
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-project-info-reports-plugin</artifactId>
+					<version>${maven-project-info-reports-plugin-version}</version>
+				</plugin>
+				<!-- Produces a report for possible updates -->
+				<plugin>
+					<groupId>org.codehaus.mojo</groupId>
+					<artifactId>versions-maven-plugin</artifactId>
+					<version>${versions-maven-plugin-version}</version>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+		
+		<!-- The plug-ins are listed in their default order (if they are default plug-ins) -->
+		<plugins>
+			<!-- Lifecycle-phase: pre-clean -->
+			<!-- Lifecycle-phase: clean -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-clean-plugin</artifactId>
+			</plugin>
+			<!-- Lifecycle-phase: post-clean -->
+			<!-- Lifecycle-phase: validate -->
+			<!-- Lifecycle-phase: initialize -->
+			<!-- Lifecycle-phase: generate-sources -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+			</plugin>
+			<!-- Lifecycle-phase: process-resources -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+			</plugin>
+			<!-- Lifecycle-phase: compile -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+			</plugin>
+			<!-- Lifecycle-phase: process-classes -->
+			<!-- Lifecycle-phase: generate-test-sources -->
+			<!-- Lifecycle-phase: process-test-sources -->
+			<!-- Lifecycle-phase: generate-test-resources -->
+			<!-- Lifecycle-phase: process-test-resources -->
+			<!-- Lifecycle-phase: test-compile -->
+			<!-- Lifecycle-phase: process-test-classes -->
+			<!-- Lifecycle-phase: test -->
+			<!-- Lifecycle-phase: prepare-package -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>antrun-prepare</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>run</goal>
+						</goals>
+						<configuration>
+							<target>
+								<!-- Register the Ant Contrib library -->
+								<taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
+								
+								<!-- Defines a macro which provides logging. -->
+								<macrodef name="log"
+									description="Writes a message to stdout including a timestamp.">
+									
+									<attribute name="message" default="" />
+									
+									<sequential>
+										<local name="timestamp"/>
+										<tstamp>
+											<format property="timestamp" pattern="yyyy-MM-dd HH:mm:ss.SSS"/>
+										</tstamp>
+										<echo message="[${timestamp}] - @{message}"/>
+									</sequential>
+								</macrodef>
+								
+								
+								
+								<!-- Print the general information -->
+								<log message="Ant task in phase prepare-package" />
+								<log message="   project.basedir                   = ${project.basedir}"/>
+								<log message="   project.build.directory           = ${project.build.directory}" />
+								<log message="   config-folder                     = ${config-folder}" />
+								<log message="" />
+								
+								<!-- Extract files -->
+								<delete dir="${project.build.directory}/opt" verbose="true" />
+								<mkdir dir="${project.build.directory}/opt" />
+								<if>
+									<not>
+										<available file="${config-folder}/nexus-${nexus-version}-unix.tar.gz"
+											type="file" />
+									</not>
+									<then>
+										<log message="File ${config-folder}/nexus-${nexus-version}-unix.tar.gz doesn't exist." />
+										<log message="Please download it from the Sonatype website:" />
+										<log message="https://help.sonatype.com/repomanager3/download/download-archives---repository-manager-3" />
+										<fail message="Nexus archive is missing. See the log for more information."/>
+									</then>
+								</if>
+								<untar src="${config-folder}/nexus-${nexus-version}-unix.tar.gz"
+									dest="${project.build.directory}/opt"
+									compression="gzip"
+									failOnEmptyArchive="true" />
+							</target>
+						</configuration>
+					</execution>
+					<execution>
+						<id>antrun-install</id>
+						<phase>install</phase>
+						<goals>
+							<goal>run</goal>
+						</goals>
+						<configuration>
+							<target>
+								<!-- Register the Ant Contrib library -->
+								<taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
+								
+								<!-- Defines a macro which provides logging. -->
+								<macrodef name="log"
+									description="Writes a message to stdout including a timestamp.">
+									
+									<attribute name="message" default="" />
+									
+									<sequential>
+										<local name="timestamp"/>
+										<tstamp>
+											<format property="timestamp" pattern="yyyy-MM-dd HH:mm:ss.SSS"/>
+										</tstamp>
+										<echo message="[${timestamp}] - @{message}"/>
+									</sequential>
+								</macrodef>
+								
+								
+								
+								<log message="Ant task in phase install" />
+								<log message="   project.basedir         = ${project.basedir}"/>
+								<log message="   project.build.directory = ${project.build.directory}"/>
+							</target>
+						</configuration>
+					</execution>
+					<execution>
+						<id>antrun-deploy</id>
+						<phase>deploy</phase>
+						<goals>
+							<goal>run</goal>
+						</goals>
+						<configuration>
+							<target>
+								<!-- Register the Ant Contrib library -->
+								<taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
+								
+								<!-- Defines a macro which provides logging. -->
+								<macrodef name="log"
+									description="Writes a message to stdout including a timestamp.">
+									
+									<attribute name="message" default="" />
+									
+									<sequential>
+										<local name="timestamp"/>
+										<tstamp>
+											<format property="timestamp" pattern="yyyy-MM-dd HH:mm:ss.SSS"/>
+										</tstamp>
+										<echo message="[${timestamp}] - @{message}"/>
+									</sequential>
+								</macrodef>
+								
+								
+								
+								<log message="Ant task in phase deploy" />
+								<log message="   project.basedir         = ${project.basedir}"/>
+								<log message="   project.build.directory = ${project.build.directory}"/>
+								<log message="" />
+							</target>
+						</configuration>
+					</execution>
+					<execution>
+						<id>antrun-pre-site</id>
+						<phase>pre-site</phase>
+						<goals>
+							<goal>run</goal>
+						</goals>
+						<configuration>
+							<target>
+								<!-- Register the Ant Contrib library -->
+								<taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
+								
+								<!-- Defines a macro which provides logging. -->
+								<macrodef name="log"
+									description="Writes a message to stdout including a timestamp.">
+									
+									<attribute name="message" default="" />
+									
+									<sequential>
+										<local name="timestamp"/>
+										<tstamp>
+											<format property="timestamp" pattern="yyyy-MM-dd HH:mm:ss.SSS"/>
+										</tstamp>
+										<echo message="[${timestamp}] - @{message}"/>
+									</sequential>
+								</macrodef>
+								
+								
+								
+								<log message="Ant task in phase pre-site" />
+								<log message="   project.basedir         = ${project.basedir}"/>
+								<log message="   project.build.directory = ${project.build.directory}"/>
+								
+								<!-- ### pom.xml -->
+								<log message="Copy POM file to site folder..." />
+								<mkdir dir="${project.build.directory}/site" />
+								<copy file="${project.basedir}/pom.xml" todir="${project.build.directory}/site" />
+							</target>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- Lifecycle-phase: package -->
+			<plugin>
+				<groupId>net.sourceforge.javadpkg</groupId>
+				<artifactId>dpkg-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>nexus-deb</id>
+						<phase>package</phase>
+						<goals>
+							<goal>dpkg</goal>
+						</goals>
+						<configuration>
+							<control>
+								<name>nexus</name>
+								<version>${nexus-version}</version>
+								<architecture>all</architecture>
+								<section>net</section>
+								<priority>optional</priority>
+								<depends>
+									<dependencies>
+										<dependency>openjdk-8-jre</dependency>
+									</dependencies>
+								</depends>
+								<maintainer>Gerrit Hohl &lt;gerrit-hohl@users.sourceforge.net&gt;</maintainer>
+								<homepage>${project.url}</homepage>
+								<description><![CDATA[A Debian package containing the Sonatypes Nexus repository manager.
+This package is meant for installing and updating Nexus.
+Additional steps are maybe necessary.
+
+]]></description>
+							</control>
+							<scripts>
+								<script>
+									<type>PREINST</type>
+									<file>${config-folder}/preinst</file>
+								</script>
+								<script>
+									<type>POSTINST</type>
+									<file>${config-folder}/postinst</file>
+								</script>
+								<script>
+									<type>PRERM</type>
+									<file>${config-folder}/prerm</file>
+								</script>
+								<script>
+									<type>POSTRM</type>
+									<file>${config-folder}/postrm</file>
+								</script>
+							</scripts>
+							<data>
+								<entries>
+									<entry>
+										<sourcePath>${project.build.directory}/opt/nexus-${nexus-version}/</sourcePath>
+										<targetPath>/opt/nexus-${nexus-version}/</targetPath>
+										<recursive>true</recursive>
+										<groupId>${nexus-group-id}</groupId>
+										<groupName>${nexus-group-name}</groupName>
+										<userId>${nexus-user-id}</userId>
+										<userName>${nexus-user-name}</userName>
+									</entry>
+									<entry>
+										<sourcePath>${config-folder}/nexus</sourcePath>
+										<targetPath>/opt/nexus-${nexus-version}/bin/nexus</targetPath>
+										<mode>0777</mode>
+										<groupId>${nexus-group-id}</groupId>
+										<groupName>${nexus-group-name}</groupName>
+										<userId>${nexus-user-id}</userId>
+										<userName>${nexus-user-name}</userName>
+									</entry>
+									<entry>
+										<sourcePath>${config-folder}/nexus.rc</sourcePath>
+										<targetPath>/opt/nexus-${nexus-version}/bin/nexus.rc</targetPath>
+										<groupId>${nexus-group-id}</groupId>
+										<groupName>${nexus-group-name}</groupName>
+										<userId>${nexus-user-id}</userId>
+										<userName>${nexus-user-name}</userName>
+									</entry>
+									<entry>
+										<sourcePath>${config-folder}/nexus.service</sourcePath>
+										<targetPath>/opt/nexus-${nexus-version}/bin/nexus.service</targetPath>
+										<groupId>${nexus-group-id}</groupId>
+										<groupName>${nexus-group-name}</groupName>
+										<userId>${nexus-user-id}</userId>
+										<userName>${nexus-user-name}</userName>
+									</entry>
+									<entry>
+										<sourcePath>${config-folder}/nexus.vmoptions</sourcePath>
+										<targetPath>/opt/nexus-${nexus-version}/bin/nexus.vmoptions</targetPath>
+										<groupId>${nexus-group-id}</groupId>
+										<groupName>${nexus-group-name}</groupName>
+										<userId>${nexus-user-id}</userId>
+										<userName>${nexus-user-name}</userName>
+									</entry>
+									<entry>
+										<sourcePath>${project.build.directory}/opt/sonatype-work/</sourcePath>
+										<targetPath>/opt/sonatype-work/</targetPath>
+										<recursive>true</recursive>
+										<groupId>${nexus-group-id}</groupId>
+										<groupName>${nexus-group-name}</groupName>
+										<userId>${nexus-user-id}</userId>
+										<userName>${nexus-user-name}</userName>
+									</entry>
+									<entry>
+										<sourcePath>${config-folder}/nexus.properties</sourcePath>
+										<targetPath>/opt/sonatype-work/nexus3/etc/nexus.properties</targetPath>
+										<groupId>${nexus-group-id}</groupId>
+										<groupName>${nexus-group-name}</groupName>
+										<userId>${nexus-user-id}</userId>
+										<userName>${nexus-user-name}</userName>
+									</entry>
+									<entry>
+										<targetPath>/opt/nexus</targetPath>
+										<symLinkPath>/opt/nexus-${nexus-version}</symLinkPath>
+										<groupId>${nexus-group-id}</groupId>
+										<groupName>${nexus-group-name}</groupName>
+										<userId>${nexus-user-id}</userId>
+										<userName>${nexus-user-name}</userName>
+									</entry>
+								</entries>
+							</data>
+							<copyright>
+								<copyright>(c) 2020 Gerrit Hohl</copyright>
+							</copyright>
+							<changeLog>
+								<entries>
+									<!-- Create an entry for each update of the Debian package -->
+									<entry>
+										<name>nexus</name>
+										<version>3.27.0-03</version>
+										<distributions>
+											<!-- Ubuntu 16.04 LTS -->
+											<distribution>xenial</distribution>
+										</distributions>
+										<urgency>low</urgency>
+										<details>
+											<detail>Sonatype Nexus repository manager v3.27.0-03.</detail>
+										</details>
+										<maintainer>Gerrit Hohl &lt;gerrit-hohl@users.sourceforge.net&gt;</maintainer>
+										<date>Sun, 13 Sep 2020 11:00:00 +0200</date>
+									</entry>
+								</entries>
+							</changeLog>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- Lifecycle-phase: pre-integration-test -->
+			<!-- Lifecycle-phase: integration-test -->
+			<!-- Lifecycle-phase: post-integration-test -->
+			<!-- Lifecycle-phase: verify -->
+			<!-- Lifecycle-phase: install -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-install-plugin</artifactId>
+				<configuration>
+					<!-- There are no files to install -->
+					<skip>true</skip>
+				</configuration>
+			</plugin>
+			<!-- Lifecycle-phase: deploy -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<configuration>
+					<!-- There are no files to deploy -->
+					<skip>true</skip>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-release-plugin</artifactId>
+				<configuration>
+					<!-- There is nothing to release -->
+					<skip>true</skip>
+					<dryRun>true</dryRun>
+				</configuration>
+			</plugin>
+			<!-- Lifecycle-phase: pre-site -->
+			<!-- Lifecycle-phase: site -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-site-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-project-info-reports-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>versions-maven-plugin</artifactId>
+			</plugin>
+			<!-- Lifecycle-phase: post-site -->
+			<!-- Lifecycle-phase: deploy-site -->
+			<!-- Lifecycle-phase: validate -->
+		</plugins>
+	</build>
+	<reporting>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-project-info-reports-plugin</artifactId>
+				<version>${maven-project-info-reports-plugin-version}</version>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>versions-maven-plugin</artifactId>
+				<version>${versions-maven-plugin-version}</version>
+			</plugin>
+		</plugins>
+	</reporting>
+	
+	<!-- Project information -->
+	<inceptionYear>2020</inceptionYear>
+	<organization>
+		<name>Gerrit Hohl</name>
+		<url>http://gerrit-hohl.users.sourceforge.net/</url>
+	</organization>
+	<developers>
+		<developer>
+			<id>gerrit-hohl</id>
+			<name>Gerrit Hohl</name>
+			<email>gerrit-hohl@users.sourceforge.net</email>
+			<url>http://gerrit-hohl.users.sourceforge.net/</url>
+			<roles>
+				<role>architect</role>
+				<role>developer</role>
+			</roles>
+			<timezone>Europe/Berlin</timezone>
+			<properties>
+				<picUrl>http://gerrit-hohl.users.sourceforge.net/images/custom/gerrit-hohl_mii_64x64.png</picUrl>
+			</properties>
+		</developer>
+	</developers>
+	
+	<!-- Environment settings -->
+	<issueManagement>
+		<system>GitHub Issues</system>
+		<url>https://github.com/gerrit-hohl/nexus/issues</url>
+	</issueManagement>
+	<scm>	
+		<url>https://github.com/gerrit-hohl/nexus</url>
+		<connection>scm:git:git:https://github.com/gerrit-hohl/nexus.git</connection>
+		<developerConnection>scm:git:git@github.com:gerrit-hohl/nexus.git</developerConnection>
+	</scm>
+</project>

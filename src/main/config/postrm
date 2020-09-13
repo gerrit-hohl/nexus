@@ -1,0 +1,31 @@
+#!/bin/sh
+# --- Enable error detection. ---
+set -e
+
+# --- Set version of this package ---
+THISVERSION="${nexus-version}"
+
+echo Post-remove script version $THISVERSION
+echo "   Parameters    : $@"
+echo "   Option        : $1"
+echo "   Other version : $2"
+echo "   This version  : $THISVERSION"
+
+case "$1" in
+    remove)
+        echo "   Removing Nexus..."
+        ;;
+    purge)
+        echo "   Purging Nexus..."
+        echo "      Delete leftover files..."
+        rm --force --recursive /opt/nexus-${nexus-version}
+        rm --force --recursive /opt/sonatype-work
+        rm --force /opt/nexus
+        ;;
+    upgrade)
+        echo "   Upgrading Nexus..."
+        ;;
+    *) 
+        echo "   Option $1 not supported by this script."
+        ;;
+esac

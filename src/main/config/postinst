@@ -1,0 +1,91 @@
+#!/bin/sh
+# --- Enable error detection. ---
+set -e
+
+# --- Set version of this package ---
+THISVERSION="${nexus-version}"
+
+echo Post-installation script version $THISVERSION
+echo "   Parameters    : $@"
+echo "   Option        : $1"
+echo "   Other version : $2"
+echo "   This version  : $THISVERSION"
+
+case "$1" in
+    configure)
+        # --- Nexus is installed for the first time ---
+        if [ -z $2 ]; then
+            echo "   Installing Nexus..."
+            
+            echo "      Create Nexus system user..."
+            adduser --system --no-create-home --group nexus
+            
+            echo "      Change user rights..."
+            chown --recursive nexus:nexus /opt/nexus
+            chown --recursive nexus:nexus /opt/nexus-$THISVERSION
+            chown --recursive nexus:nexus /opt/sonatype-work
+            
+            echo "      Copy Nexus service file..."
+            cp /opt/nexus/bin/nexus.service /etc/systemd/system/nexus.service
+            
+            echo "      Update service management..."
+            systemctl daemon-reload
+            
+            echo "      Enable Nexus service..."
+            systemctl enable nexus.service
+            
+            echo "      Start Nexus service..."
+            systemctl start nexus.service
+            echo "      Nexus service started."
+            
+            echo ""
+            echo "   Please make sure that the file descriptors are set to 131072."
+            echo ""
+            echo "   nano /etc/security/limits.conf"
+            echo ""
+            echo "   *                soft    nofile          131072"
+            echo "   *                hard    nofile          131072"
+            echo "   root             soft    nofile          131072"
+            echo "   root             hard    nofile          131072"
+            echo ""
+            echo "   Reboot after making these changes for making them effective."
+            echo ""
+            echo "   The Sonatype Nexus repository manager should be accessable from every client"
+            echo "   by the following URL (may differ depending on your network settings):"
+            echo ""
+            if [ -z "$HOSTNAME" ]; then
+                echo "      http://[IP address]:8081/nexus/"
+            fi
+            if [ -n "$HOSTNAME" ]; then
+                echo "      http://$HOSTNAME:8081/nexus/"
+            fi
+            echo ""
+        # --- Other Nexus version was installed before ---
+        else
+            echo "   Upgrading Nexus..."
+            
+            echo "      Change user rights..."
+            chown --recursive nexus:nexus /opt/nexus
+            chown --recursive nexus:nexus /opt/nexus-$THISVERSION
+            chown --recursive nexus:nexus /opt/sonatype-work
+            
+            echo "      Copy Nexus service file..."
+            cp /opt/nexus/bin/nexus.service /etc/systemd/system/nexus.service
+            
+            echo "      Update service management..."
+            systemctl daemon-reload
+            
+            echo "      Start Nexus service..."
+            systemctl start nexus.service
+            echo "      Nexus service started."
+        fi
+        ;;
+    abort-upgrade)
+        # --- If we exit here, too, dpkg will be "unhappy" ---
+        # --- It will mark the installed package as inconsistent ---
+        echo "   Abort Nexus upgrade..."
+        ;;
+    *) 
+        echo "   Option $1 not supported by this script."
+        ;;
+esac

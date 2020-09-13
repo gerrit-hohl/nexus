@@ -1,0 +1,58 @@
+#!/bin/sh
+# --- Enable error detection. ---
+set -e
+
+# --- Set version of this package ---
+THISVERSION="${nexus-version}"
+
+echo Pre-remove script version $THISVERSION
+echo "   Parameters    : $@"
+echo "   Option        : $1"
+echo "   Other version : $2"
+echo "   This version  : $THISVERSION"
+
+case "$1" in
+    remove)
+        echo "   Removing Nexus..."
+        
+        # Is the service running?
+        set +e
+        systemctl status nexus.service > /dev/null 2>&1
+        RUNNING=$?
+        set -e
+        if [ "0" = "$RUNNING" ]; then
+            echo "      Stopping Nexus service..."
+            systemctl stop nexus.service
+        fi
+        
+        # Is the service enabled?
+        set +e
+        systemctl is-enabled nexus.service  > /dev/null 2>&1
+        ENABLED=$?
+        set -e
+        if [ "0" = "$ENABLED" ]; then
+            echo "      Disable Nexus service..."
+            systemctl disable nexus.service
+        fi
+        
+        echo "      Remove Nexus service file..."
+        rm --force /etc/systemd/system/nexus.service
+        
+        echo "      Update service management..."
+        systemctl daemon-reload
+        
+        echo "      Delete Nexus system user..."
+        deluser --force nexus
+        echo "      Nexus system user deleted."
+        ;;
+    upgrade)
+        echo "   Upgrading Nexus..."
+        ;;
+    failed-upgrade)
+        echo "   Nexus upgrade failed. Abort this script, too."
+        exit 1
+        ;;
+    *)
+        echo "   Option $1 not supported by this script."
+        ;;
+esac
